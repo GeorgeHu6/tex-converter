@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+
+<meta charset="UTF-8">
+<head>
+    <script>
+        MathJax = {
+            tex: {
+                inlineMath: []
+            },
+            svg: {
+                fontCache: 'local'
+            }
+        };
+    </script>
+    <script src="./tex-svg.js"></script>
+    <script>
+        function convertLatex() {
+            let tex = document.getElementById("inpt").value;
+            var mathjax_node = MathJax.tex2svg(tex);
+            let screen = document.getElementById("display");
+            screen.innerHTML = "";
+            screen.appendChild(mathjax_node);
+        }
+    </script>
+</head>
+
+<body>
+    <p id="display">
+    </p>
+    <p id="test">
+        中文测试
+    </p>
+    <textarea id="inpt">
+        \begin{equation}
+        D(x) = \begin{cases}
+        1, & \text{如果 } x \in \mathbb{Q}; \\
+        0, & \text{如果 } x \in \mathbb{R};
+        \end{cases}
+        \end{equation}
+    </textarea>
+</body>
