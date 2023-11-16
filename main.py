@@ -4,9 +4,9 @@ from PySide6.QtWidgets import QApplication, QWidget, QMainWindow, \
 import sys
 from selenium.common.exceptions import WebDriverException, NoSuchWindowException
 from selenium.webdriver.chrome.options import Options
-from PySide6.QtGui import QColor, QAction
+from PySide6.QtGui import QColor, QAction, QCloseEvent
 from selenium import webdriver
-from PySide6.QtCore import Qt, QByteArray, QRect
+from PySide6.QtCore import Qt
 from PySide6.QtSvgWidgets import QSvgWidget
 import os
 import win32clipboard as wincb
@@ -165,10 +165,16 @@ class BackgroudProcess():
         self.back_driver.get(os.path.join(os.getcwd(), "test.html"))
     
     def close(self):
+        """关闭后台浏览器进程
+        """
         if self.is_alive():
-            del self.back_driver
-            self.back_driver = None
-            self.type = None
+            try:
+                self.back_driver.quit()
+            except Exception:
+                del self.back_driver
+            finally:
+                self.back_driver = None
+                self.type = None
         else:
             self.back_driver = None
             self.type = None
@@ -270,6 +276,10 @@ class MainWindow(QMainWindow):
         # self.svg_viewer.setContextMenuPolicy(Qt.CustomContextMenu)
         # self.svg_viewer.customContextMenuRequested.connect(self.svgContextMenuHandle)
         # self.console_field.addWidget(self.svg_viewer)
+    
+    def closeEvent(self, event: QCloseEvent) -> None:
+        self.back_driver.close()
+        return super().closeEvent(event)
     
     def svgContextMenuHandle(self, point):
         self.svg_context_menu.exec(self.svg_viewer.mapToGlobal(point))
