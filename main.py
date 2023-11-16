@@ -188,6 +188,11 @@ class BackgroudProcess():
             str: svg元素的outerHTML
         """
         svg_output = self.back_driver.find_element("tag name", "svg")
+        defs_output = svg_output.find_element("tag name", "defs")
+        # 判断LaTex渲染是否报错（点击确定是已确保LaTex不为空白）
+        if len(defs_output.get_attribute("innerHTML")) == 0:
+            return tuple([svg_output.text])
+        
         return svg_output.get_attribute("outerHTML")
 
 
@@ -285,10 +290,24 @@ class MainWindow(QMainWindow):
     
     
     def convertButtonHandle(self):
-        latex_text = self.input_field.itemAt(1).widget().toPlainText()
-        self.back_driver.setTex(latex_text)
+        if not self.back_driver.is_alive():
+            self.console_log.append("\n后台进程还未开启，请先开启！")
+            return
 
-        svg_img = SVGGridItem(self.back_driver.getSvg())
+        latex_text = self.input_field.itemAt(1).widget().toPlainText().strip()
+        if len(latex_text) == 0:
+            self.console_log.append("\n输入的LaTex不能为空白")
+            return
+
+        self.back_driver.setTex(latex_text)
+        
+        # LaTex错误，提示错误信息
+        data = self.back_driver.getSvg()
+        if type(data) == tuple:
+            self.console_log.append("\nLaTex输入错误：{}".format(data[0]))
+            return
+
+        svg_img = SVGGridItem(data)
         self.svgitem_list.append(svg_img)
 
         self.svg_vbox.addWidget(svg_img.render(None))
