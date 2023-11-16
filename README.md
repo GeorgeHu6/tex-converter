@@ -53,7 +53,7 @@ D:\your-folder> .\tex_converter\Script\activate
 
 ## 待完善功能
 
-- [ ] 错误提示输出
+- [x] 错误提示输出
 - [ ] 点击公式查看大图
 - [ ] 托盘模式
 - [ ] 免切换应用，直接从剪贴板读取LaTex，渲染后重新放到剪贴板
