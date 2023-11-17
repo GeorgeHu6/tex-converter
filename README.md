@@ -22,7 +22,7 @@ D:\your-folder> .\tex_converter\Script\activate
 
 ### 界面介绍
 
-![image](https://github.com/GeorgeHu6/tex-converter/assets/43069137/5465a1ff-9e62-4ba6-8184-8f2f8f81d3ef)
+![image](/assets/main_interface.png)
 
 ①：选择后台进程使用的浏览器（推荐使用Chrome），可以选择一个你电脑上已经安装过的浏览器
 
@@ -39,6 +39,8 @@ D:\your-folder> .\tex_converter\Script\activate
 ⑦：LaTex公式显示区域
 
 ⑧：在需要复制的公式上右键，选择“复制为SVG”，然后就可以在Word、PPT等地方直接粘贴啦
+
+⑨：勾选后，右侧显示区域将不会保留每次的渲染结果，只渲染当前LaTeX公式
 
 ### 操作步骤
 
