@@ -236,6 +236,11 @@ class MainWindow(QMainWindow):
         self.tool_bt_line.addWidget(check_browser)
         invoke_browser.stateChanged.connect(self.toggleBrowserHandle)
 
+        # “仅渲染当前LaTeX”复选框
+        self.show_current_tex_only = QCheckBox("仅渲染当前LaTeX")
+        self.show_current_tex_only.setCheckState(Qt.CheckState.Unchecked)
+        self.leftLayout.addWidget(self.show_current_tex_only)
+
         # Latex输入区域
         self.input_field = QVBoxLayout()
         self.leftLayout.addLayout(self.input_field)
@@ -313,13 +318,18 @@ class MainWindow(QMainWindow):
         
         # LaTex错误，提示错误信息
         data = self.back_driver.getSvg()
-        if type(data) == tuple:
+        if isinstance(data, tuple):
             self.console_log.append("\nLaTex输入错误：{}".format(data[0]))
             return
 
         svg_img = SVGGridItem(data)
         self.svgitem_list.append(svg_img)
 
+        if self.show_current_tex_only.checkState() == Qt.CheckState.Checked:  # 检查是否勾选“仅渲染当前LaTex”
+            for i in reversed(range(self.svg_vbox.count())):  # 清除已有的Svg
+                widget = self.svg_vbox.itemAt(i).widget()
+                widget.setParent(None)
+                widget.deleteLater()
         self.svg_vbox.addWidget(svg_img.render(None))
 
 
