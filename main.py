@@ -38,7 +38,7 @@ class SvgWidget(QSvgWidget):
 
     def __init__(self, parent=None):
         super().__init__(parent=parent)
-        self.svg_contents: bytes = b""
+        self.svg_contents = b""
         self.setToolTip("左键单击以预览")
 
     def mousePressEvent(self, event):
@@ -47,7 +47,7 @@ class SvgWidget(QSvgWidget):
         else:
             super().mousePressEvent(event)
 
-    def load(self, contents):
+    def load(self, contents: bytes):
         self.svg_contents = contents
         super().load(contents)
 
@@ -297,6 +297,7 @@ class MainWindow(QMainWindow):
         # 一列纵向布局svg
         self.svg_vbox = QVBoxLayout()
         self.svg_vbox.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.svg_vbox.setSpacing(20)
         self.svg_container.setLayout(self.svg_vbox)
 
 
@@ -322,13 +323,11 @@ class MainWindow(QMainWindow):
         wincb.CloseClipboard()
     
     @staticmethod
-    def showLargerSvg(svg_contents: str):
-        """
-        创建一个新窗口，显示更大的svg
-        Args:
-            svg_contents: 要显示的svg
+    def showLargerSvg(svg_contents: bytes):
+        """创建一个新窗口，显示更大的svg
 
-        Returns: None
+        Args:
+            svg_contents (bytes): 要显示的svg
         """
         window = QDialog()
         layout = QVBoxLayout()
@@ -336,7 +335,7 @@ class MainWindow(QMainWindow):
         window.setWindowTitle("TeX Preview")
         window.setLayout(layout)
         svg_widget.load(svg_contents)
-        svg_widget.setMinimumHeight(150)
+        svg_widget.setMaximumHeight(120)
         svg_widget.renderer().setAspectRatioMode(Qt.KeepAspectRatio)
         layout.addWidget(svg_widget)
 
