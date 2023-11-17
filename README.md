@@ -38,7 +38,8 @@ D:\your-folder> .\tex_converter\Script\activate
 
 ⑦：LaTex公式显示区域
 
-⑧：在需要复制的公式上右键，选择“复制为SVG”，然后就可以在Word、PPT等地方直接粘贴啦
+⑧：在需要复制的公式上右键，选择“复制为SVG”，然后就可以在Word、PPT等地方直接粘贴；左键单击公式将会弹出窗口，显示公式的大图
+<details><summary>&emsp;效果展示</summary><img src="./assets/tex_preview.png"></details><br>
 
 ⑨：勾选后，右侧显示区域将不会保留每次的渲染结果，只渲染当前LaTeX公式
 
@@ -56,7 +57,7 @@ D:\your-folder> .\tex_converter\Script\activate
 ## 待完善功能
 
 - [x] 错误提示输出
-- [ ] 点击公式查看大图
+- [x] 点击公式查看大图
 - [ ] 托盘模式
 - [ ] 免切换应用，直接从剪贴板读取LaTex，渲染后重新放到剪贴板
 - [ ] 更多功能等你来提，有相关意见或建议可以在issues中提出，合理的会添加到这里
