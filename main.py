@@ -89,7 +89,7 @@ class SVGGridItem():
         copy_act = QAction("复制为svg", self.context_menu)
         copy_act.triggered.connect(self.copyAsSVG)
         self.context_menu.addAction(copy_act)
-        
+
         if svg_text is not None:
             self.svg_widget = SvgWidget()
         else:
@@ -303,11 +303,7 @@ class MainWindow(QMainWindow):
         # self.svg_viewer.setContextMenuPolicy(Qt.CustomContextMenu)
         # self.svg_viewer.customContextMenuRequested.connect(self.svgContextMenuHandle)
         # self.console_field.addWidget(self.svg_viewer)
-    
-    def closeEvent(self, event: QCloseEvent) -> None:
-        self.back_driver.close()
-        return super().closeEvent(event)
-    
+
     def svgContextMenuHandle(self, point):
         self.svg_context_menu.exec(self.svg_viewer.mapToGlobal(point))
     
@@ -402,3 +398,6 @@ window = MainWindow()
 window.show()
 
 app.exec()
+
+if window.back_driver.is_alive():  # 关闭浏览器相关后台进程
+    window.back_driver.close()
