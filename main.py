@@ -1,12 +1,12 @@
 from PySide6.QtWidgets import QApplication, QWidget, QMainWindow, \
     QHBoxLayout, QVBoxLayout, QComboBox, QPlainTextEdit, QLabel, \
-    QTextEdit, QPushButton, QCheckBox, QMenu, QGridLayout, QScrollArea, QSizePolicy
+    QTextEdit, QPushButton, QCheckBox, QMenu, QGridLayout, QScrollArea, QSizePolicy, QDialog
 import sys
 from selenium.common.exceptions import WebDriverException, NoSuchWindowException
 from selenium.webdriver.chrome.options import Options
 from PySide6.QtGui import QColor, QAction, QCloseEvent
 from selenium import webdriver
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtSvgWidgets import QSvgWidget
 import os
 import win32clipboard as wincb
@@ -29,6 +29,28 @@ class DROPFILES(Structure):
         ("fNC", c_int),     # pt是否为客户端区域的相对坐标
         ("fWide", c_int)    # 文件是否包含Unicode字符
     ]
+
+
+class SvgWidget(QSvgWidget):
+    """自定用于显示Svg的控件"""
+
+    leftClicked = Signal(bytes)
+
+    def __init__(self, parent=None):
+        super().__init__(parent=parent)
+        self.svg_contents = b""
+        self.setToolTip("左键单击以预览")
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.leftClicked.emit(self.svg_contents)
+        else:
+            super().mousePressEvent(event)
+
+    def load(self, contents: bytes):
+        self.svg_contents = contents
+        super().load(contents)
+
 
 def createFileCopyClipboardData(filelist: List[str]) -> bytes:
     """文件复制剪贴板数据构造
@@ -67,16 +89,16 @@ class SVGGridItem():
         copy_act = QAction("复制为svg", self.context_menu)
         copy_act.triggered.connect(self.copyAsSVG)
         self.context_menu.addAction(copy_act)
-        
+
         if svg_text is not None:
-            self.svg_widget = QSvgWidget()
+            self.svg_widget = SvgWidget()
         else:
             self.svg_widget = None
         
     def show_context_menu(self, point):
         self.context_menu.exec(self.svg_widget.mapToGlobal(point))
 
-    def render(self, svg_text: str) -> QSvgWidget | None:
+    def render(self, svg_text: str) -> SvgWidget | None:
         if svg_text is None:
             if self.svg_text is None:
                 return None
@@ -236,6 +258,11 @@ class MainWindow(QMainWindow):
         self.tool_bt_line.addWidget(check_browser)
         invoke_browser.stateChanged.connect(self.toggleBrowserHandle)
 
+        # “仅渲染当前LaTeX”复选框
+        self.show_current_tex_only = QCheckBox("仅渲染当前LaTeX")
+        self.show_current_tex_only.setCheckState(Qt.CheckState.Unchecked)
+        self.leftLayout.addWidget(self.show_current_tex_only)
+
         # Latex输入区域
         self.input_field = QVBoxLayout()
         self.leftLayout.addLayout(self.input_field)
@@ -270,17 +297,14 @@ class MainWindow(QMainWindow):
         # 一列纵向布局svg
         self.svg_vbox = QVBoxLayout()
         self.svg_vbox.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.svg_vbox.setSpacing(20)
         self.svg_container.setLayout(self.svg_vbox)
 
 
         # self.svg_viewer.setContextMenuPolicy(Qt.CustomContextMenu)
         # self.svg_viewer.customContextMenuRequested.connect(self.svgContextMenuHandle)
         # self.console_field.addWidget(self.svg_viewer)
-    
-    def closeEvent(self, event: QCloseEvent) -> None:
-        self.back_driver.close()
-        return super().closeEvent(event)
-    
+
     def svgContextMenuHandle(self, point):
         self.svg_context_menu.exec(self.svg_viewer.mapToGlobal(point))
     
@@ -298,7 +322,25 @@ class MainWindow(QMainWindow):
         wincb.SetClipboardData(fmt_id, svg_text)
         wincb.CloseClipboard()
     
-    
+    @staticmethod
+    def showLargerSvg(svg_contents: bytes):
+        """创建一个新窗口，显示更大的svg
+
+        Args:
+            svg_contents (bytes): 要显示的svg
+        """
+        window = QDialog()
+        layout = QVBoxLayout()
+        svg_widget = QSvgWidget()
+        window.setWindowTitle("TeX Preview")
+        window.setLayout(layout)
+        svg_widget.load(svg_contents)
+        svg_widget.setMaximumHeight(120)
+        svg_widget.renderer().setAspectRatioMode(Qt.KeepAspectRatio)
+        layout.addWidget(svg_widget)
+
+        window.exec()
+
     def convertButtonHandle(self):
         if not self.back_driver.is_alive():
             self.console_log.append("\n后台进程还未开启，请先开启！")
@@ -313,14 +355,22 @@ class MainWindow(QMainWindow):
         
         # LaTex错误，提示错误信息
         data = self.back_driver.getSvg()
-        if type(data) == tuple:
+        if isinstance(data, tuple):
             self.console_log.append("\nLaTex输入错误：{}".format(data[0]))
             return
 
         svg_img = SVGGridItem(data)
         self.svgitem_list.append(svg_img)
 
-        self.svg_vbox.addWidget(svg_img.render(None))
+        if self.show_current_tex_only.checkState() == Qt.CheckState.Checked:  # 检查是否勾选“仅渲染当前LaTex”
+            for i in reversed(range(self.svg_vbox.count())):  # 清除已有的Svg
+                widget = self.svg_vbox.itemAt(i).widget()
+                widget.setParent(None)
+                widget.deleteLater()
+        svg_widget = svg_img.render(None)
+        svg_widget.leftClicked.connect(self.showLargerSvg)
+        
+        self.svg_vbox.addWidget(svg_widget)
 
 
     def checkBrowserHandle(self):
@@ -347,3 +397,6 @@ window = MainWindow()
 window.show()
 
 app.exec()
+
+if window.back_driver.is_alive():  # 关闭浏览器相关后台进程
+    window.back_driver.close()
